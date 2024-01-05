@@ -11,10 +11,12 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: true,
     validate: {
-      validation(url) {
-        return /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&//=]*)$/.test(url);
+      validator(url) {
+        return /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&//=]*)$/.test(
+          url,
+        );
       },
-      message: 'Введите URL!',
+      message: 'Ошибка в URL!',
     },
   },
   owner: {
@@ -22,11 +24,12 @@ const cardSchema = new mongoose.Schema({
     ref: 'user',
     required: true,
   },
-  likes: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
-    default: [],
-  },
+  likes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
