@@ -2,12 +2,12 @@ const httpConstants = require('http2').constants;
 const mongoose = require('mongoose');
 const Card = require('../models/card');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     // чтобы получить поле owner в виде объекта, использую метод populate
     .populate(['owner'])
-    .then((cards) => res.send(cards))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .then((cards) => res.status(httpConstants.HTTP_STATUS_OK).send(cards))
+    .catch(next);
 };
 
 module.exports.createCard = (req, res, next) => {
@@ -64,9 +64,9 @@ module.exports.likeCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        res.status((httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' }));
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' });
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status((httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' }));
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' });
       } else {
         next(err);
       }
@@ -82,9 +82,9 @@ module.exports.dislikeCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        res.status((httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' }));
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' });
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status((httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' }));
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' });
       } else {
         next(err);
       }
