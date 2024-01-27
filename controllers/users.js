@@ -44,7 +44,7 @@ module.exports.updateUser = (req, res, next) => {
 
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: 'true', runValidators: true })
     .orFail()
-    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
+    .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
@@ -59,7 +59,7 @@ module.exports.updateUser = (req, res, next) => {
 module.exports.updateUserAvatar = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, { avatar: req.body.avatar }, { new: 'true', runValidators: true })
     .orFail()
-    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
+    .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });

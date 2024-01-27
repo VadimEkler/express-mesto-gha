@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const httpConstants = require('http2').constants;
 
 const { PORT = 3000 } = process.env;
 
@@ -20,7 +21,7 @@ app.use((req, res, next) => {
 app.use('/', require('./routes/index'));
 
 app.use('*', (req, res) => {
-  res.status(404).send({ message: 'Страница не найдена' });
+  res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Страница не найдена' });
 });
 
 // Мидлвар для ошибки сервера
