@@ -1,3 +1,5 @@
+const httpConstants = require('http2').constants;
+const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 module.exports.getCards = (req, res) => {
@@ -8,7 +10,7 @@ module.exports.getCards = (req, res) => {
     .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
@@ -16,53 +18,75 @@ module.exports.createCard = (req, res) => {
       // вместо простого возврата в случае успешного запроса, использую метод populate,
       // чтобы вернуть в поле owner объект пользователя
       Card.findById(card._id)
+        .orFail()
         .populate('owner')
-        .then((data) => res.status(201).send(data))
-        .catch((err) => res.status(404).send({ message: err.mesage }));
+        .then((data) => res.status(httpConstants.HTTP_STATUS_CREATED).send(data))
+        .catch((err) => {
+          if (err instanceof mongoose.Error.DocumentNotFoundError) {
+            res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' });
+          } else {
+            next(err);
+          }
+        });
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: err.message });
+      if (err instanceof mongoose.Error.ValidationError) {
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
       } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+        next(err);
       }
     });
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   Card.findByIdAndDelete(req.params.cardId)
-    .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-        return;
-      }
-      res.send({ message: 'Выбранная карточка удалена!' });
+    .orFail()
+    .then(() => {
+      res.status(httpConstants.HTTP_STATUS_OK).send({ message: 'Карточка удалена!' });
     })
-    .catch(() => res.status(400).send({ message: 'Некорректный id' }));
+    .catch((err) => {
+      if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' });
+      } else if (err instanceof mongoose.Error.CastError) {
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' });
+      } else {
+        next(err);
+      }
+    });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
+    .orFail()
     .populate(['owner'])
     .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-        return;
-      }
-      res.send(card);
+      res.status(httpConstants.HTTP_STATUS_OK).send(card);
     })
-    .catch(() => res.status(400).send({ message: 'Некорректный id' }));
+    .catch((err) => {
+      if (err instanceof mongoose.Error.CastError) {
+        res.status((httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' }));
+      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        res.status((httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' }));
+      } else {
+        next(err);
+      }
+    });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
+    .orFail()
     .populate(['owner'])
     .then((card) => {
-      if (!card) {
-        res.status(404).send({ message: 'Карточка с указанным id не найдена' });
-        return;
-      }
-      res.send(card);
+      res.status(httpConstants.HTTP_STATUS_OK).send(card);
     })
-    .catch(() => res.status(400).send({ message: 'Некорректный id' }));
+    .catch((err) => {
+      if (err instanceof mongoose.Error.CastError) {
+        res.status((httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id карточки!' }));
+      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
+        res.status((httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка с указанным id не найдена!' }));
+      } else {
+        next(err);
+      }
+    });
 };
