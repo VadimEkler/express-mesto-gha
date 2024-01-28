@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
-const ConflictError = require('../errors/NotFoundError');
+const ConflictError = require('../errors/ConflictError');
 
 const MONGO_DUPLICATE_ERROR_CODE = 11000;
 const SECRET_KEY = 'some-secret-key';
@@ -48,7 +48,7 @@ module.exports.createUser = (req, res, next) => {
       }))
       .catch((err) => {
         if (err.code === MONGO_DUPLICATE_ERROR_CODE) {
-          next(new ConflictError('Пользователь с данным E-mail уже зарегистрирован!'));
+          next(new ConflictError('Пользователь с данным E-mail уже зарегистрирован!!!!!'));
         } else if (err instanceof mongoose.Error.ValidationError) {
           next(new BadRequestError(err.message));
         } else {

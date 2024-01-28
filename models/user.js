@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const UnathorizedError = require('../errors/UnauthorizedError');
-const NotFoundError = require('../errors/NotFoundError');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -31,7 +30,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     minlength: [2, 'Минимальная длина поля - 2 символа!'],
     maxlength: [30, 'Максимальная длина поля - 30 символов!'],
-    default: 'Исследователь океана',
+    default: 'Исследователь',
   },
   avatar: {
     type: String,
@@ -50,7 +49,7 @@ userSchema.statics.findUserByCredentials = function findUserByCredentials(email,
     .select('+password')
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Пользователь с данным E-mail не найден!');
+        throw new UnathorizedError('Пользователь с данным E-mail не найден!');
       }
 
       return bcrypt.compare(password, user.password)
