@@ -62,15 +62,7 @@ module.exports.deleteCard = (req, res, next) => {
           }
         });
     })
-    .catch((err) => {
-      if (err instanceof mongoose.Error.CastError) {
-        next(new BadRequestError('Некорректный id карточки!'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Карточка с указанным id не найдена!'));
-      } else {
-        next(err);
-      }
-    });
+    .catch(() => next());
 };
 
 module.exports.likeCard = (req, res, next) => {
