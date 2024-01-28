@@ -1,3 +1,4 @@
+const { errors } = require('celebrate');
 const express = require('express');
 const mongoose = require('mongoose');
 const httpConstants = require('http2').constants;
@@ -10,29 +11,18 @@ app.use(express.json());
 
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {});
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6596524093ec8d6a7d3d711d',
-  };
-
-  next();
-});
-
 app.use('/', require('./routes/index'));
 
-app.use('*', (req, res) => {
-  res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Страница не найдена' });
-});
+app.use(errors());
 
-// Мидлвар для ошибки сервера
+// Мидлвар для централизованной обработки ошибок
 
 app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
+  const { statusCode = httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR, message } = err;
   res
     .status(statusCode)
     .send({
-      message: statusCode === 500
+      message: statusCode === httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR
         ? 'На сервере произошла ошибка'
         : message,
     });

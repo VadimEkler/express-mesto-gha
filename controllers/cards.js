@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Card = require('../models/card');
 const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -21,7 +22,7 @@ module.exports.createCard = (req, res, next) => {
       // чтобы вернуть в поле owner объект пользователя
       Card.findById(card._id)
         .orFail()
-        .populate('owner')
+        .populate(['owner'])
         .then((data) => res.status(httpConstants.HTTP_STATUS_CREATED).send(data))
         .catch((err) => {
           if (err instanceof mongoose.Error.DocumentNotFoundError) {
@@ -41,20 +42,27 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndDelete(req.params.cardId)
-    .orFail()
-    .then(() => {
-      res.status(httpConstants.HTTP_STATUS_OK).send({ message: 'Карточка удалена!' });
-    })
-    .catch((err) => {
-      if (err instanceof mongoose.Error.CastError) {
-        next(new BadRequestError('Некорректный id карточки!'));
-      } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        next(new NotFoundError('Карточка с указанным id не найдена!'));
-      } else {
-        next(err);
+  Card.findById(req.params.cardId)
+    .then((card) => {
+      if (!card.owner.equals(req.user._id)) {
+        throw new ForbiddenError('Вы не можете удалить карточку другого пользователя!');
       }
-    });
+      Card.findByIdAndDelete(card)
+        .orFail()
+        .then(() => {
+          res.status(httpConstants.HTTP_STATUS_OK).send({ message: 'Карточка удалена!' });
+        })
+        .catch((err) => {
+          if (err instanceof mongoose.Error.CastError) {
+            next(new BadRequestError('Некорректный id карточки!'));
+          } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
+            next(new NotFoundError('Карточка с указанным id не найдена!'));
+          } else {
+            next(err);
+          }
+        });
+    })
+    .catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {
