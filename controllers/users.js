@@ -1,6 +1,8 @@
 const httpConstants = require('http2').constants;
 const mongoose = require('mongoose');
 const User = require('../models/user');
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -16,9 +18,9 @@ module.exports.getUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный id пользователя!' });
+        next(new BadRequestError('Некорректный id пользователя!'));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь с указанным id не найден!' });
+        next(new NotFoundError('Пользователь с указанным id не найден!'));
       } else {
         next(err);
       }
@@ -32,7 +34,7 @@ module.exports.createUser = (req, res, next) => {
     .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+        next(new BadRequestError(err.message));
       } else {
         next(err);
       }
@@ -47,9 +49,9 @@ module.exports.updateUser = (req, res, next) => {
     .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+        next(new BadRequestError(err.message));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь c указанным id не найден!' });
+        next(new NotFoundError('Пользователь c указанным id не найден!'));
       } else {
         next(err);
       }
@@ -62,9 +64,9 @@ module.exports.updateUserAvatar = (req, res, next) => {
     .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: err.message });
+        next(new BadRequestError(err.message));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь c указанным id не найден!' });
+        next(new NotFoundError('Пользователь c указанным id не найден!'));
       } else {
         next(err);
       }
