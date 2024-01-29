@@ -49,22 +49,26 @@ module.exports.deleteCard = (req, res, next) => {
       } else if (!card.owner.equals(req.user._id)) {
         throw new ForbiddenError('Вы не можете удалить карточку другого пользователя!');
       }
-      Card.findByIdAndDelete(card)
+      Card.deleteOne(card)
         .orFail()
         .then(() => {
           res.status(httpConstants.HTTP_STATUS_OK).send({ message: 'Карточка удалена!' });
         })
         .catch((err) => {
-          if (err instanceof mongoose.Error.CastError) {
-            next(new BadRequestError('Некорректный id карточки!'));
-          } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
+          if (err instanceof mongoose.Error.DocumentNotFoundError) {
             next(new NotFoundError('Карточка с указанным id не найдена!'));
           } else {
             next(err);
           }
         });
     })
-    .catch(next);
+    .catch((err) => {
+      if (err instanceof mongoose.Error.CastError) {
+        next(new BadRequestError('Некорректный id карточки!'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {

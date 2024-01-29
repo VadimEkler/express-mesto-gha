@@ -7,8 +7,9 @@ const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
 
+const { SECRET_KEY } = process.env;
+
 const MONGO_DUPLICATE_ERROR_CODE = 11000;
-const SECRET_KEY = 'some-secret-key';
 const HASH_SALT = 10;
 
 module.exports.getUsers = (req, res, next) => {
